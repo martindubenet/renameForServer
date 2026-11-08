@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Built locally with build_app.sh
+*.app/
+
+# Last choices made in the window (per machine)
+.last_choice.json
+__pycache__/

@@ -1,4 +1,4 @@
-# Rename File for Server — Automator Quick Action <img width="48px" src="https://static.wikia.nocookie.net/ipod/images/a/ab/Automator.png/revision/latest?cb=20160908152407" alt="Otto the Automator" />
+# Rename File for Server —  macOS Automator Quick Action <img width="48px" src="https://static.wikia.nocookie.net/ipod/images/a/ab/Automator.png/revision/latest?cb=20160908152407" alt="Otto the Automator" />
 
 Renames the selected files (any type) **in place** with "server friendly" names, straight from the Finder. When the selection contains images, it can also save an **.avif** copy of each one.
 

@@ -4,49 +4,37 @@ Renames the selected files (any type) **in place** with "server friendly" names,
 
 <img width="100%" src="img_renameForServer.avif" alt="Screenshot">
 
-> Part of `aiScripts/`. Steps shared by all the scripts (Python libraries, `~/aiScripts` symbolic link, Xcode Command Line Tools) are detailed in [`watermarkImg/README.md`](../watermarkImg/README.md#1-install-the-dependencies-once).
+> Related scripts: [`watermarkImg`](https://github.com/martindubenet/watermarkImg) and [`addDateImg`](https://github.com/martindubenet/addDateImg).
+>
+> Generic macOS setup (Python libraries for Automator, Xcode Command Line Tools, creating a Quick Action, permissions, notifications): see my [wiki › macOS Automator](https://github.com/martindubenet/wed-dev-design/wiki/app-%E2%80%A2-macOS-Automator).
 
 ## How it works
 
 - `rename_for_server.py` — the Python script called by the Quick Action. It renames the files and encodes the AVIF copies.
-- `RenameForServer.app` — a small native macOS app (source in `RenameForServerApp/`, built on your Mac with `build_app.sh`) that only shows the window and posts the end-of-task notification.
+- `RenameForServer.app` — a small native macOS app (source in `RenameForServerApp/`, built locally with `build_app.sh`) that only shows the window and posts the end-of-task notification.
 
 If `RenameForServer.app` is missing or fails, the script automatically falls back to a plain native dialog (see [Fallback](#fallback)).
 
-## 1. Requirements (once)
+## Requirements
 
 - Renaming alone needs only Python 3.
-- The AVIF option needs **Pillow 11.2+** (native AVIF encoder) and **pillow-heif** (to read HEIC) for `/opt/homebrew/bin/python3`: `/opt/homebrew/bin/python3 -m pip install -U Pillow pillow-heif`. To check: `/opt/homebrew/bin/python3 -c "from PIL import features; print('AVIF:', features.check('avif'))"` must print `AVIF: True`.
-- The `~/aiScripts` symbolic link (see the watermark README, step 2).
-- Xcode Command Line Tools, to build the app (`xcode-select -p` to check).
+- The AVIF option needs **Pillow 11.2+** (native AVIF encoder) and **pillow-heif** (to read HEIC), installed for the `python3` used by the Quick Action. Check: `python3 -c "from PIL import features; print('AVIF:', features.check('avif'))"` must print `AVIF: True`.
+- Xcode Command Line Tools, to build the app.
 
-## 2. Build the app (once, and after any change to `RenameForServerApp/`)
+## Setup
 
-In your Terminal app:
+1. **Build the app** (once, and after any change to `RenameForServerApp/`), from this folder: `./build_app.sh` — it ends with `Built: …/RenameForServer.app` (git-ignored).
+2. **Create the Quick Action** in Automator with:
+   - **Workflow receives current** → `files or folders` in `Finder` (so it accepts every file type)
+   - **Run Shell Script** action, **Shell** → `/bin/zsh`, **Pass input** → `as arguments`, script (adjust the path to this folder):
 
-```bash
-~/aiScripts/renameForServer/build_app.sh
-```
+     ```bash
+     /opt/homebrew/bin/python3 "$HOME/aiScripts/renameForServer/rename_for_server.py" "$@"
+     ```
 
-It ends with `Built: …/RenameForServer.app`.
+   - Saved as e.g. **Rename File for Server**.
 
-## 3. Create the Quick Action in Automator
-
-1. Open **Automator**, **File > New**, choose `Quick Action`.
-2. At the top of the document, set:
-   - **Workflow receives current** → `files or folders` (so it accepts every file type)
-   - **in** → `Finder`
-   - **Image** (*optional*) → an icon of your choice
-3. Add the **Run Shell Script** action, with **Shell** → `/bin/zsh` and **Pass input** → `as arguments`.
-4. Replace the content of the script box with:
-
-   ```bash
-   /opt/homebrew/bin/python3 "$HOME/aiScripts/renameForServer/rename_for_server.py" "$@"
-   ```
-
-5. **File > Save**, e.g. **Rename File for Server**.
-
-## 4. Usage
+## Usage
 
 > ⚠ The selected files are renamed directly. Try it on copies first.
 
@@ -99,16 +87,15 @@ Applied in this order (the letter case is otherwise kept):
 
 ## Fallback
 
-If the window ever becomes unstable, delete or rename `RenameForServer.app` in the Finder: the script then shows a plain native dialog (**Cancel** / **Rename** / **Rename + AVIF copy**, the last button only when images are selected). To force it for a test, in your Terminal app:
+If the window ever becomes unstable, delete or rename `RenameForServer.app`: the script then shows a plain native dialog (**Cancel** / **Rename** / **Rename + AVIF copy**, the last button only when images are selected). To force it for a test, from this folder:
 
 ```bash
-AI_FORCE_DIALOG=1 /opt/homebrew/bin/python3 ~/aiScripts/renameForServer/rename_for_server.py ~/Desktop/a-file.txt
+AI_FORCE_DIALOG=1 /opt/homebrew/bin/python3 rename_for_server.py ~/Desktop/a-file.txt
 ```
 
 ## Troubleshooting
 
 - **The plain dialog shows up instead of the window** → `RenameForServer.app` is missing or failed: rebuild it. Running the script from the Terminal (command above, without `AI_FORCE_DIALOG=1`) prints the reason (`RenameForServer.app gave no answer…`).
 - **"this Pillow can't write AVIF"** → update Pillow for the right Python (see Requirements).
-- **No notification at the end** → the first time, macOS asks whether the app may send notifications: click **Allow**. Check **System Settings › Notifications** and Focus modes. If notifications are refused, a dialog that closes itself after 3 seconds is shown instead.
-- **Permission alert "… wants access to control Finder"** → click **Allow** (dialogs are shown by the Finder so they get the focus).
+- **No notification at the end** → allow notifications for **Rename file for server** (the app name) the first time macOS asks. If macOS refuses them, a dialog that closes itself after 3 seconds is shown instead.
 - **Files inside a selected folder aren't renamed** → by design, folders are ignored: open the folder and select its files.
